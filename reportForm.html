@@ -1,0 +1,51 @@
+<html>
+<head><script src="/axios.min.js"></script></head>
+<body>
+<form method='post' action='/'>
+  <div id="location"></div>
+  <div id="status"></div>
+  <input type="hidden" id="lat" name="lat"><br>
+  <input type="hidden" id="ogc_fid" name="ogc_fid">
+  <label for="selectedRoad">Not the road you want to report on? Select one from this list:</label><select id="selectedRoad" name="selectedRoad">
+  </select><br>
+  <input type="hidden" id="long" name="long">
+  <label for='desc'>What's the cause of this closure?</label>
+  <input type="text" id="desc" name="desc">
+  <input type="submit">
+</form>
+<script>
+  function doSomething(lat,long) {
+    axios.get(`/nearestRoads/${lat}/${long}`)
+      .then((response)=>{
+      const sel=document.getElementById('selectedRoad')
+      response.data.forEach(road=>{
+          const opt=document.createElement('option')
+          opt.innerText=road.street
+          opt.setAttribute("value", road.ogc_fid);
+           sel.appendChild(opt)
+      })
+//        document.getElementById('selectedRoad')
+    })
+    
+    axios.get(`/nearestRoad/${lat}/${long}`)
+      .then((response)=>{
+      //alert(JSON.stringify(response))
+        document.getElementById('lat').value=lat;
+        document.getElementById('long').value=long;
+        document.getElementById('location').innerText="You are reporting a road closure for "+response.data.street+"."
+        document.getElementById('status').innerText=`This road is currently ${response.data.is_closed ? 'closed' : 'open'}`
+        document.getElementById('ogc_fid').setAttribute('value',response.data.ogc_fid);
+    })
+  }
+  if ("geolocation" in navigator) {
+    /* geolocation is available */
+    navigator.geolocation.getCurrentPosition(function(position) {
+      doSomething(position.coords.latitude, position.coords.longitude);
+    });
+  } else {
+    /* geolocation IS NOT available */
+    alert('you must be using a browser that has geolocation turned on')
+  }
+</script>
+</body>
+</html>
